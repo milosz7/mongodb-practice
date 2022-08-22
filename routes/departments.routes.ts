@@ -51,36 +51,32 @@ router.put('/departments/:id', (req, res, next) => {
     return next(error400);
   }
   const query = { _id: new ObjectId(req.params.id) };
-  const dataToEdit = req.db
-    .collection<departmentData>('departments')
-    .findOne(query, (err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      if (data) {
-        req.db
-          .collection<departmentData>('departments')
-          .updateOne(query, { $set: { name: name } }, (err) => {
-            if (err) next(error500);
-          });
-        return res.status(200).send('OK');
-      }
-    });
+  req.db.collection<departmentData>('departments').findOne(query, (err, data) => {
+    if (err) return next(error500);
+    if (!data) return next(error404);
+    if (data) {
+      req.db
+        .collection<departmentData>('departments')
+        .updateOne(query, { $set: { name: name } }, (err) => {
+          if (err) next(error500);
+        });
+      return res.status(200).send('OK');
+    }
+  });
 });
 
 router.delete('/departments/:id', (req, res, next) => {
   const query = { _id: new ObjectId(req.params.id) };
-  const dataToEdit = req.db
-    .collection<departmentData>('departments')
-    .findOne(query, (err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      if (data) {
-        req.db.collection<departmentData>('departments').deleteOne(query, (err) => {
-          if (err) return next(error500);
-        });
-        return res.status(200).send('OK');
-      }
-    });
+  req.db.collection<departmentData>('departments').findOne(query, (err, data) => {
+    if (err) return next(error500);
+    if (!data) return next(error404);
+    if (data) {
+      req.db.collection<departmentData>('departments').deleteOne(query, (err) => {
+        if (err) return next(error500);
+      });
+      return res.status(200).send('OK');
+    }
+  });
 });
 
 export default router;
