@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-export interface errorData {
+interface errorData {
   status: number
   message: string
 }
@@ -30,9 +30,3 @@ interface productData {
   name: string;
   client: string;
 }
-
-export interface dbData {
-  employees: employeeData[];
-  departments: departmentData[];
-  products: productData[];
-} 
