@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get('/departments', (req, res, next) => {
   req.db
-    .collection('departments')
+    .collection<departmentData>('departments')
     .find()
     .toArray((err, data) => {
       if (err) return next(error500);
@@ -37,7 +37,7 @@ router.get('/departments/:id', (req, res, next) => {
 router.post('/departments', (req, res, next) => {
   const { name }: { name: string | undefined } = req.body;
   if (name) {
-    req.db.collection('departments').insertOne({ name }, (err) => {
+    req.db.collection<departmentData>('departments').insertOne({ name }, (err) => {
       if (err) return next(error500);
       return res.status(200).send('OK');
     });
@@ -51,30 +51,36 @@ router.put('/departments/:id', (req, res, next) => {
     return next(error400);
   }
   const query = { _id: new ObjectId(req.params.id) };
-  const dataToEdit = req.db.collection('departments').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    if (data) {
-      req.db.collection('departments').updateOne(query, { $set: { name: name } }, (err) => {
-        if (err) next(error500);
-      });
-      return res.status(200).send('OK');
-    }
-  });
+  const dataToEdit = req.db
+    .collection<departmentData>('departments')
+    .findOne(query, (err, data) => {
+      if (err) return next(error500);
+      if (!data) return next(error404);
+      if (data) {
+        req.db
+          .collection<departmentData>('departments')
+          .updateOne(query, { $set: { name: name } }, (err) => {
+            if (err) next(error500);
+          });
+        return res.status(200).send('OK');
+      }
+    });
 });
 
 router.delete('/departments/:id', (req, res, next) => {
   const query = { _id: new ObjectId(req.params.id) };
-  const dataToEdit = req.db.collection('departments').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    if (data) {
-      req.db.collection('departments').deleteOne(query, (err) => {
-        if (err) return next(error500);
-      });
-      return res.status(200).send('OK');
-    }
-  });
+  const dataToEdit = req.db
+    .collection<departmentData>('departments')
+    .findOne(query, (err, data) => {
+      if (err) return next(error500);
+      if (!data) return next(error404);
+      if (data) {
+        req.db.collection<departmentData>('departments').deleteOne(query, (err) => {
+          if (err) return next(error500);
+        });
+        return res.status(200).send('OK');
+      }
+    });
 });
 
 export default router;
