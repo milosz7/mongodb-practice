@@ -8,6 +8,11 @@ declare global {
   }
 }
 
+export interface errorData {
+  status: number
+  message: string
+}
+
 interface employeeData {
   _id?: ObjectId
   firstName: string
