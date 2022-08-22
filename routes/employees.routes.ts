@@ -19,7 +19,7 @@ router.get('/employees', (req, res, next) => {
 router.get('/employees/random', (req, res, next) => {
   req.db
     .collection<employeeData>('employees')
-    .aggregate([{ $sample: { size: 1 } }])
+    .aggregate<employeeData>([{ $sample: { size: 1 } }])
     .toArray((err, data) => {
       if (err) return next(error500);
       if (!data) return next(error404);

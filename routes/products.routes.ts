@@ -17,10 +17,13 @@ router.get('/products', (req, res, next) => {
 });
 
 router.get('/products/random', (req, res, next) => {
-  req.db.collection<productData>('products').aggregate([{ $sample: { size: 1 } }]).toArray((err, data) => {
-    if (err) return next(error500);
-    return res.json(...data!);
-  });
+  req.db
+    .collection<productData>('products')
+    .aggregate<productData>([{ $sample: { size: 1 } }])
+    .toArray((err, data) => {
+      if (err) return next(error500);
+      return res.json(...data!);
+    });
 });
 
 router.get('/products/:id', (req, res, next) => {
