@@ -1,82 +1,84 @@
 import express from 'express';
-import { ObjectId } from 'mongodb';
-import { departmentData } from '../types/types';
-import { error500, error400, error404 } from '../errors';
+import { error400, error404 } from '../errors';
+import Department from '../models/departments.model';
+import { ErrorData } from '../types/types';
 
 const router = express.Router();
 
-router.get('/departments', (req, res, next) => {
-  req.db
-    .collection<departmentData>('departments')
-    .find()
-    .toArray((err, data) => {
-      if (err) return next(error500);
-      return res.json(data);
-    });
-});
-
-router.get('/departments/random', (req, res, next) => {
-  req.db
-    .collection<departmentData>('departments')
-    .aggregate<departmentData>([{ $sample: { size: 1 } }])
-    .toArray((err, data) => {
-      if (err) next(error500);
-      return res.json(...data!);
-    });
-});
-
-router.get('/departments/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  const department = req.db.collection('departments').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    return res.json(data);
-  });
-});
-
-router.post('/departments', (req, res, next) => {
-  const { name }: { name: string | undefined } = req.body;
-  if (name) {
-    req.db.collection<departmentData>('departments').insertOne({ name }, (err) => {
-      if (err) return next(error500);
-      return res.status(200).send('OK');
-    });
+router.get('/departments', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    if ((await Department.find()).length === 0) return next(error404);
+    return res.json(await Department.find());
+  } catch (e: any) {
+    return next({ status: 500, message: e.message });
   }
-  if (!name) next(error400);
 });
 
-router.put('/departments/:id', (req, res, next) => {
-  const { name }: { name: string | undefined } = req.body;
-  if (!name) {
-    return next(error400);
+router.get('/departments/random', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    if ((await Department.find()).length === 0) return next(error404);
+    res.json(await Department.aggregate<typeof Department>().sample(1));
+  } catch (e: any) {
+    return next({ status: 500, message: e.message });
   }
-  const query = { _id: new ObjectId(req.params.id) };
-  req.db.collection<departmentData>('departments').findOne(query, (err, data) => {
-    if (err) return next(error500);
+});
+
+router.get('/departments/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    if ((await Department.find()).length === 0) return next(error404);
+    const data = await Department.findById(req.params.id);
     if (!data) return next(error404);
-    if (data) {
-      req.db
-        .collection<departmentData>('departments')
-        .updateOne(query, { $set: { name: name } }, (err) => {
-          if (err) next(error500);
-        });
+    res.json(data);
+  } catch (e: any) {
+    return next({ status: 500, message: e.message });
+  }
+});
+
+router.post('/departments', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const { name }: { name: string | undefined } = req.body;
+    if (name) {
+      const newDepartment = new Department({ name });
+      await newDepartment.save();
       return res.status(200).send('OK');
     }
-  });
+    if (!name) next(error400);
+  } catch (e: any) {
+    return next({ status: 500, message: e.message });
+  }
 });
 
-router.delete('/departments/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  req.db.collection<departmentData>('departments').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    if (data) {
-      req.db.collection<departmentData>('departments').deleteOne(query, (err) => {
-        if (err) return next(error500);
-      });
-      return res.status(200).send('OK');
+router.put('/departments/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const { name }: { name: string | undefined } = req.body;
+    if (!name) {
+      return next(error400);
     }
-  });
+    if (name) {
+      const dataToUpdate = await Department.findById(req.params.id);
+      if (!dataToUpdate) return next(error404);
+      if (dataToUpdate) {
+        dataToUpdate.name = name;
+        await dataToUpdate.save();
+        return res.json(dataToUpdate);
+      }
+    }
+  } catch (e: any) {
+    return next({ status: 500, message: e.message });
+  }
+});
+
+router.delete('/departments/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const dataToRemove = await Department.findById(req.params.id);
+    if (!dataToRemove) {
+      return next(error404);
+    }
+    await dataToRemove.delete();
+    return res.json(dataToRemove);
+  } catch (e: any) {
+    return next({ status: 500, message: e.message });
+  }
 });
 
 export default router;
