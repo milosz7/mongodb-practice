@@ -3,50 +3,36 @@ import cors from 'cors';
 import employeesRoutes from './routes/employees.routes';
 import departmentsRoutes from './routes/departments.routes';
 import productsRoutes from './routes/products.routes';
-import * as mongoDB from 'mongodb';
-import { errorData } from './types/types';
+import mongoose from 'mongoose';
+import { ErrorData } from './types/types';
 
-const uri = 'mongodb://localhost:27017';
+const uri = 'mongodb://localhost:27017/companyDB';
 
-const client = new mongoDB.MongoClient(uri);
+const app = express();
 
-const connectToDb = async () => {
-  try {
-    await client.connect();
-    await client.db('admin').command({ ping: 1 });
-    console.log('Connected to database!');
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-  } catch (e: any) {
-    console.log(e.message);
-    await client.close();
+app.use('/api', employeesRoutes);
+app.use('/api', departmentsRoutes);
+app.use('/api', productsRoutes);
+
+app.use(
+  (err: ErrorData, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.status(err.status).send({ message: err.message });
   }
-};
+);
 
-connectToDb()
-  .then(() => {
-    const app = express();
-    const db = client.db('companyDB');
+mongoose.connect(uri);
+const db = mongoose.connection;
 
-    app.use(cors());
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: false }));
-    app.use((req, res, next) => {
-      req.db = db;
-      next();
-    });
+db.once('open', () => {
+  console.log('Connected to the database');
+});
 
-    app.use('/api', employeesRoutes);
-    app.use('/api', departmentsRoutes);
-    app.use('/api', productsRoutes);
+db.on('error', (err) => console.log('Error ' + err));
 
-    app.use((err: errorData, req: express.Request, res: express.Response, next: express.NextFunction) => {
-      res.status(err.status).send({ message: err.message });
-    });
-
-    app.listen('8000', () => {
-      console.log('Server is running on port: 8000');
-    });
-  })
-  .catch((err: Error) => {
-    console.log(err.message);
-  });
+app.listen('8000', () => {
+  console.log('Server is running on port: 8000');
+});
