@@ -1,81 +1,77 @@
 import express from 'express';
-import { ObjectId } from 'mongodb';
-import { error500, error404, error400 } from '../errors';
-import { productData } from '../types/types';
+import { error404 } from '../errors';
+import { ErrorData } from '../types/types';
+import Product from '../models/products.model';
 
 const router = express.Router();
 
-router.get('/products', (req, res, next) => {
-  req.db
-    .collection<productData>('products')
-    .find()
-    .toArray((err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      return res.json(data);
-    });
-});
-
-router.get('/products/random', (req, res, next) => {
-  req.db
-    .collection<productData>('products')
-    .aggregate<productData>([{ $sample: { size: 1 } }])
-    .toArray((err, data) => {
-      if (err) return next(error500);
-      return res.json(...data!);
-    });
-});
-
-router.get('/products/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  const employee = req.db.collection<productData>('products').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    return res.json(data);
-  });
-});
-
-router.post('/products', (req, res, next) => {
-  const { name, client }: { name: string | undefined; client: string | undefined } = req.body;
-  if (name && client) {
-    req.db.collection<productData>('products').insertOne({ name, client }, (err) => {
-      if (err) return next(error500);
-      return res.status(200).send('OK');
-    });
-  } else {
-    return next(error400);
+router.get('/products', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const productsData = await Product.find();
+    if (productsData.length === 0) return next(error404);
+    return res.json(productsData);
+  } catch (e) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
   }
 });
 
-router.put('/products/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  const { name, client }: { name: string | undefined; client: string | undefined } = req.body;
-  if (name && client) {
-    req.db.collection<productData>('products').findOne(query, (err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      req.db
-        .collection<productData>('products')
-        .updateOne(query, { $set: { name, client } }, (err) => {
-          if (err) return next(error500);
-          return res.status(200).send('OK');
-        });
-    });
-  } else {
-    return next(error400);
+router.get('/products/random', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const randomProduct = await Product.aggregate<typeof Product>().sample(1);
+    if (randomProduct.length === 0) return next(error404);
+    return res.json(randomProduct);
+  } catch (e) {
+    if (e instanceof Error) return next({status: 500, message: e.message});
   }
 });
 
-router.delete('/products/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  req.db.collection<productData>('products').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    req.db.collection<productData>('products').deleteOne(query, (err) => {
-      if (err) return next(error500);
-      return res.status(200).send('OK');
-    });
-  });
+router.get('/products/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const productData = await Product.findById(req.params.id);
+    if (!productData) return next(error404);
+    return res.json(productData);
+  } catch (e) {
+    if (e instanceof Error) return next({status: 500, message: e.message})
+  }
+});
+
+router.post('/products', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const { name, client }: { name: string | undefined; client: string | undefined } = req.body;
+    const newProduct = new Product({name, client});
+    await newProduct.save();    
+    return res.status(200).send('OK');
+  } catch (e) {
+    if (e instanceof Error) return next({status: 500, message: e.message})    
+  }
+});
+
+router.put('/products/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const data: { name: string | undefined; client: string | undefined } = req.body;
+    const dataToEdit = await Product.findById(req.params.id);
+    if (!dataToEdit) return next(error404);
+    (Object.keys(data) as (keyof typeof data)[]).forEach(key => {
+      if (typeof data[key] === 'string') {
+        dataToEdit[key] = data[key] as string
+      }
+    })
+    await dataToEdit.save();
+    return res.json(dataToEdit);
+  } catch (e) {
+    if (e instanceof Error) return next({status: 500, message: e.message})        
+  }
+});
+
+router.delete('/products/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const dataToRemove = await Product.findById(req.params.id);
+    if (!dataToRemove) return next(error404);
+    await dataToRemove.delete();
+    return res.json(dataToRemove);    
+  } catch (e) {
+    if (e instanceof Error) return next({status: 500, message: e.message})            
+  }
 });
 
 export default router;
