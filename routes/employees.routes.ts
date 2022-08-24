@@ -1,42 +1,43 @@
 import express from 'express';
-import { ObjectId } from 'mongodb';
-import { employeeData } from '../types/types';
-import { error500, error400, error404 } from '../errors';
+import { ErrorData } from '../types/types';
+import { error404 } from '../errors';
+import Employee from '../models/employees.model';
 
 const router = express.Router();
 
-router.get('/employees', (req, res, next) => {
-  req.db
-    .collection<employeeData>('employees')
-    .find()
-    .toArray((err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      return res.json(data);
-    });
+router.get('/employees', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const employeesData = await Employee.find();
+    if (employeesData.length === 0) return next(error404);
+    return res.json(employeesData);
+  } catch (e) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
+  }
 });
 
-router.get('/employees/random', (req, res, next) => {
-  req.db
-    .collection<employeeData>('employees')
-    .aggregate<employeeData>([{ $sample: { size: 1 } }])
-    .toArray((err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      return res.json(...data!);
-    });
+router.get('/employees/random', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const randomEmployee = await Employee.aggregate<typeof Employee>().sample(1);
+    if (randomEmployee.length === 0) {
+      return next(error404);
+    }
+    return res.json(randomEmployee);
+  } catch (e) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
+  }
 });
 
-router.get('/employees/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  req.db.collection<employeeData>('employees').findOne(query, (err, data) => {
-    if (err) return next(error500);
-    if (!data) return next(error404);
-    return res.json(data);
-  });
+router.get('/employees/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const employeeData = await Employee.findById(req.params.id);
+    if (!employeeData) return next(error404);
+    return res.json(employeeData);
+  } catch (e: any) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
+  }
 });
 
-router.post('/employees', (req, res, next) => {
+router.post('/employees', async (req, res, next) => {
   const {
     firstName,
     lastName,
@@ -46,49 +47,47 @@ router.post('/employees', (req, res, next) => {
     lastName: string | undefined;
     department: string | undefined;
   } = req.body;
-  if (firstName && lastName && department) {
-    req.db
-      .collection<employeeData>('employees')
-      .insertOne({ firstName, lastName, department }, (err) => {
-        if (err) return next(error500);
-        return res.status(200).send('OK');
-      });
-  } else {
-    return next(error400);
+  try {
+    const newEmployee = new Employee({ department, firstName, lastName });
+    await newEmployee.save();
+    return res.status(200).send('OK');
+  } catch (e) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
   }
 });
 
-router.put('/employees/:id', (req, res, next) => {
-  const query = { _id: new ObjectId(req.params.id) };
-  const {
-    firstName,
-    lastName,
-    department,
-  }: {
-    firstName: string | undefined;
-    lastName: string | undefined;
-    department: string | undefined;
-  } = req.body;
-  if (firstName && lastName && department) {
-    req.db.collection<employeeData>('employees').findOne(query, (err, data) => {
-      if (err) return next(error500);
-      if (!data) return next(error404);
-      req.db
-        .collection<employeeData>('employees')
-        .updateOne(query, { $set: { firstName, lastName, department } }, (err) => {
-          if (err) return next(error500);
-          return res.status(200).send('OK');
-        });
+router.put('/employees/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const data: {
+      firstName: string | undefined;
+      lastName: string | undefined;
+      department: string | undefined;
+    } = req.body;
+    const dataToEdit = await Employee.findById(req.params.id);
+    if (!dataToEdit) {
+      return next(error404);
+    }
+    (Object.keys(data) as (keyof typeof data)[]).forEach((key) => {
+      if (typeof data[key] === 'string') {
+        dataToEdit[key] = data[key] as string;
+      }
     });
-  } else {
-    return next(error400);
+    await dataToEdit.save();
+    return res.json(dataToEdit);
+  } catch (e) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
   }
 });
 
-router.delete('/employees/:id', (req, res) => {
-  const query = { _id: new ObjectId(req.params.id) };
-
-  req.db.collection<employeeData>('employees');
+router.delete('/employees/:id', async (req, res, next: (err: ErrorData) => void) => {
+  try {
+    const documentToRemove = await Employee.findById(req.params.id);
+    if (!documentToRemove) return next(error404);
+    await documentToRemove.delete();
+    res.json(documentToRemove);
+  } catch (e) {
+    if (e instanceof Error) return next({ status: 500, message: e.message });
+  }
 });
 
 export default router;
