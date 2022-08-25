@@ -5,7 +5,7 @@ const productSchema = new Schema({
   client: {type: String, required: true},
 });
 
-type ProductModel = InferSchemaType<typeof productSchema>;
+export type ProductModel = InferSchemaType<typeof productSchema>;
 
 const Product = model<ProductModel>('Product', productSchema);
 

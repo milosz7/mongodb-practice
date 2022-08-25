@@ -2,9 +2,10 @@ import { Schema, model, InferSchemaType } from "mongoose";
 
 const departmentSchema = new Schema({
   name: {type: String, required: true},
+  _id: {type: Schema.Types.ObjectId},
 });
 
-type DepartmentModel = InferSchemaType<typeof departmentSchema>
+export type DepartmentModel = InferSchemaType<typeof departmentSchema>
 
 const Department = model<DepartmentModel>('Department', departmentSchema);
 

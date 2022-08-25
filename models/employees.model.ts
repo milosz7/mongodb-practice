@@ -1,12 +1,12 @@
 import { Schema, model, InferSchemaType } from "mongoose";
 
 const employeeSchema = new Schema({
-  department: {type: String, required: true},
+  department: {type: Schema.Types.ObjectId, ref: 'Department'},
   firstName: {type: String, required: true},
   lastName: {type: String, required: true},
 });
 
-type EmployeeModel = InferSchemaType<typeof employeeSchema>;
+export type EmployeeModel = InferSchemaType<typeof employeeSchema>;
 
 const Employee = model<EmployeeModel>('Employee', employeeSchema);
 
