@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon server.ts",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register ./**/*.test.ts --watch  --watch-files './**/*.ts'"
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' find ./**/* -name '*.test.ts' | xargs mocha -r ts-node/register --watch --watch-files './**/*.ts'"
   },
   "dependencies": {
     "chai": "^4.3.6",
