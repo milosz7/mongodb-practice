@@ -76,7 +76,7 @@ const employeeMethods = {
         if (key !== 'department' && typeof data[key] === 'string') {
           dataToEdit[key] = data[key] as string;
         }
-        if (newEmployeeDepartment) dataToEdit.department = newEmployeeDepartment._id;
+        if (newEmployeeDepartment) dataToEdit.department = newEmployeeDepartment._id.toString();
       });
       await dataToEdit.save();
       if (data.department && !newEmployeeDepartment) {

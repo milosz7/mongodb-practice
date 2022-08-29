@@ -1,7 +1,7 @@
 import { Schema, model, InferSchemaType } from "mongoose";
 
 const employeeSchema = new Schema({
-  department: {type: Schema.Types.ObjectId, ref: 'Department'},
+  department: {type: Schema.Types.ObjectId, required: true, ref: 'Department'},
   firstName: {type: String, required: true},
   lastName: {type: String, required: true},
 });
