@@ -1,4 +1,4 @@
-import Department from '../models/departments.model';
+import Department from '../../models/departments.model';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 import mongoose from 'mongoose';

@@ -1,9 +1,9 @@
-import Employee from '../models/employees.model';
-import Department from '../models/departments.model';
+import Employee from '../../models/employees.model';
+import Department from '../../models/departments.model';
 import { describe } from 'mocha';
 import { expect } from 'chai';
 import mongoose from 'mongoose';
-import { DepartmentModel } from '../models/departments.model';
+import { DepartmentModel } from '../../models/departments.model';
 
 const TEST_DB_URI = 'mongodb://localhost:27017/companyDBtests';
 
