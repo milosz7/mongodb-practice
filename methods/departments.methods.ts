@@ -18,7 +18,7 @@ const departmentMethods = {
     try {
       const randomDepartmentData = await Department.aggregate<typeof Department>().sample(1);
       if (randomDepartmentData.length === 0) return next(error404);
-      return res.json(randomDepartmentData);
+      return res.json(...randomDepartmentData);
     } catch (e) {
       if (e instanceof Error) return next({ status: 500, message: e.message });
     }
