@@ -14,10 +14,11 @@ describe('Department PUT requests', () => {
     ]);
   });
   it('Should edit data properly', async () => {
-    const { status, body }: { body: typeof Department; status: number } = await request(server)
-      .put('/api/departments/630e1adbc6a7e02950e660f6')
-      .send({ name: 'edited-dep' });
-    expect(body).to.contain({ name: 'edited-dep' });
+    const { status, body }: { body: typeof Department; status: number } = await request(server).put(
+      '/api/departments/630e1adbc6a7e02950e660f6'
+    ).send({name: 'edited-dep'});
+    const editedData = await Department.findOne({name: 'edited-dep'});
+    expect(editedData).to.contain({name: 'edited-dep'});
     expect(status).to.eq(200);
   });
   after(async () => {
