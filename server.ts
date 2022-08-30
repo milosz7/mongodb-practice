@@ -5,8 +5,7 @@ import departmentsRoutes from './routes/departments.routes';
 import productsRoutes from './routes/products.routes';
 import mongoose from 'mongoose';
 import { ErrorData } from './types/types';
-
-const uri = 'mongodb://localhost:27017/companyDB';
+import { uri } from './variables';
 
 const app = express();
 
@@ -33,6 +32,6 @@ db.once('open', () => {
 
 db.on('error', (err) => console.log('Error ' + err));
 
-app.listen('8000', () => {
-  console.log('Server is running on port: 8000');
+export const server = app.listen('8000', () => {
+  if (process.env.NODE_ENV === 'development') console.log('Server is running on port: 8000');
 });
